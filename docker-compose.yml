@@ -1,0 +1,45 @@
+services:
+
+  # PostgreSQL с расширением pgvector для хранения векторных эмбеддингов
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ailevels}
+      POSTGRES_USER: ${DB_USER:-ailevels}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ailevels}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ailevels} -d ${DB_NAME:-ailevels}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Spring Boot приложение
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+      - "5005:5005"   # Remote Debug порт
+    environment:
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-openai/gpt-4o-mini}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-ailevels}
+      DB_USER: ${DB_USER:-ailevels}
+      DB_PASSWORD: ${DB_PASSWORD:-ailevels}
+      SERVER_PORT: 8080
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  pgdata:

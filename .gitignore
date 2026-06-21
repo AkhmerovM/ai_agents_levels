@@ -1,0 +1,14 @@
+# Секреты — никогда не коммитить!
+.env
+
+# Maven
+target/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store

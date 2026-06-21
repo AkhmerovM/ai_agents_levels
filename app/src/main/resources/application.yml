@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: ai-levels-lab
+
+  # Настройки подключения к PostgreSQL
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ailevels}
+    username: ${DB_USER:ailevels}
+    password: ${DB_PASSWORD:ailevels}
+    driver-class-name: org.postgresql.Driver
+
+  # Отключаем только JPA/Hibernate — DataSource нам нужен для pgvector
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+
+  # Статика отдаётся из classpath:/static/
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+server:
+  port: ${SERVER_PORT:8080}
+
+# Настройки LLM (OpenRouter)
+openrouter:
+  api-key: ${OPENROUTER_API_KEY:change-me}
+  base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+
+llm:
+  model: ${LLM_MODEL:openai/gpt-4o-mini}
+
+logging:
+  level:
+    com.ailevels: DEBUG
+    dev.langchain4j: INFO
