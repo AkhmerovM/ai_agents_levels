@@ -8,6 +8,7 @@ import dev.langchain4j.store.embedding.pgvector.PgVectorEmbeddingStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 /**
  * Конфигурация эмбеддингов и векторного хранилища.
@@ -53,6 +54,7 @@ public class EmbeddingConfig {
      * где <=> — оператор косинусного расстояния из pgvector.
      */
     @Bean
+    @Primary // level6 создаёт второй EmbeddingStore — этот главный (для RAG уровня 2)
     public EmbeddingStore<TextSegment> embeddingStore() {
         // Парсим параметры подключения из JDBC URL
         // jdbc:postgresql://host:port/dbname

@@ -14,6 +14,11 @@
         <module>level1-pure-llm</module>
         <module>level2-memory-rag</module>
         <module>level3-tools</module>
+        <module>level4-agents</module>
+        <module>level5-multiagent</module>
+        <module>level6-longterm-memory</module>
+        <module>level7-planning</module>
+        <module>level8-autonomous</module>
         <module>app</module>
     </modules>
 
@@ -84,6 +89,31 @@
             <dependency>
                 <groupId>com.ailevels</groupId>
                 <artifactId>level3-tools</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ailevels</groupId>
+                <artifactId>level4-agents</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ailevels</groupId>
+                <artifactId>level5-multiagent</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ailevels</groupId>
+                <artifactId>level6-longterm-memory</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ailevels</groupId>
+                <artifactId>level7-planning</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.ailevels</groupId>
+                <artifactId>level8-autonomous</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

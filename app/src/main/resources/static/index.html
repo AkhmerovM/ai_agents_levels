@@ -266,6 +266,102 @@
             color: #8b949e;
             padding: 0 4px;
         }
+
+        #user-id-row {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        #user-id-input {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #e1e4e8;
+            padding: 4px 8px;
+            font-size: 12px;
+            width: 200px;
+        }
+
+        #user-id-input:focus { outline: none; border-color: #58a6ff; }
+
+        .info-panel {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px;
+            font-size: 13px;
+        }
+
+        .info-panel h3 {
+            font-size: 13px;
+            color: #f0883e;
+            margin-bottom: 8px;
+        }
+
+        .memory-item {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .memory-item .mem-type {
+            color: #bc8cff;
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .memory-item .mem-time {
+            color: #8b949e;
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .memory-item .mem-content {
+            color: #e1e4e8;
+            margin-top: 4px;
+            white-space: pre-wrap;
+        }
+
+        .sandbox-file {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .sandbox-file-header {
+            padding: 6px 10px;
+            background: #2e2a1a;
+            color: #e3b341;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .sandbox-file-header:hover { filter: brightness(1.2); }
+
+        .sandbox-file-body {
+            padding: 8px 10px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            color: #c9d1d9;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -289,6 +385,14 @@
         <button class="success" id="ingest-btn" onclick="ingestDocuments()" style="display:none">
             📚 Загрузить документы
         </button>
+        <div id="user-id-row">
+            👤 userId:
+            <input id="user-id-input" type="text" placeholder="user-id" />
+        </div>
+        <button id="memory-btn" onclick="showMemory()" style="display:none">🧠 Память</button>
+        <button id="clear-memory-btn" class="danger" onclick="clearMemory()" style="display:none">🗑️ Очистить память</button>
+        <button id="sandbox-btn" onclick="showSandbox()" style="display:none">📁 Показать файлы</button>
+        <button id="clear-sandbox-btn" class="danger" onclick="clearSandbox()" style="display:none">🗑️ Очистить песочницу</button>
         <button class="danger" onclick="resetSession()">🔄 Сбросить сессию</button>
         <span id="session-info"></span>
     </div>
@@ -321,6 +425,12 @@
                 промпты, ответы модели, вызовы инструментов, найденные документы.
             </div>
         </div>
+        <div id="info-panel-container" style="display:none; flex-direction:column; overflow-y:auto; max-height:50%; border-top: 1px solid #30363d;">
+            <div style="padding: 10px 16px; font-size:13px; font-weight:600; color:#bc8cff; background:#0d1117; border-bottom:1px solid #30363d;" id="info-panel-title">
+                🧠 Память пользователя
+            </div>
+            <div id="info-panel-body" style="padding:10px; overflow-y:auto; flex:1;"></div>
+        </div>
     </div>
 </main>
 
@@ -332,10 +442,24 @@
         selectedPattern: null,
         selectedRole: 'teacher',
         sessionId: generateSessionId(),
+        userId: loadOrCreateUserId(),
     };
 
     function generateSessionId() {
         return 'session-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function generateUserId() {
+        return 'user-' + Math.random().toString(36).substr(2, 9);
+    }
+
+    function loadOrCreateUserId() {
+        let uid = localStorage.getItem('ai-levels-userId');
+        if (!uid) {
+            uid = generateUserId();
+            localStorage.setItem('ai-levels-userId', uid);
+        }
+        return uid;
     }
 
     // Иконки для типов шагов трассировки
@@ -352,6 +476,13 @@
     // При загрузке страницы: получаем паттерны с бэкенда
     async function init() {
         document.getElementById('session-info').textContent = 'ID: ' + state.sessionId;
+        // Init userId input
+        const uidInput = document.getElementById('user-id-input');
+        uidInput.value = state.userId;
+        uidInput.addEventListener('change', () => {
+            state.userId = uidInput.value.trim() || state.userId;
+            localStorage.setItem('ai-levels-userId', state.userId);
+        });
         try {
             const resp = await fetch('/api/patterns');
             state.patterns = await resp.json();
@@ -365,7 +496,11 @@
         const levelSelect = document.getElementById('level-select');
         const levels = [...new Set(state.patterns.map(p => p.level))].sort();
         levelSelect.innerHTML = '<option value="">— Уровень —</option>';
-        const levelNames = { '1': '1 — Чистая LLM', '2': '2 — Память и RAG', '3': '3 — Инструменты' };
+        const levelNames = {
+            '1': '1 — Чистая LLM', '2': '2 — Память и RAG', '3': '3 — Инструменты',
+            '4': '4 — Агенты', '5': '5 — Мульти-агент', '6': '6 — Долгосрочная память',
+            '7': '7 — Планирование', '8': '8 — Автономные агенты',
+        };
         levels.forEach(l => {
             const opt = document.createElement('option');
             opt.value = l;
@@ -382,6 +517,16 @@
         const patternSelect = document.getElementById('pattern-select');
         patternSelect.innerHTML = '<option value="">— Паттерн —</option>';
         document.getElementById('pattern-desc').textContent = 'Выберите паттерн';
+
+        // Hide info panel and level-specific controls when level changes
+        document.getElementById('info-panel-container').style.display = 'none';
+        document.getElementById('ingest-btn').style.display = 'none';
+        document.getElementById('role-selector').style.display = 'none';
+        document.getElementById('memory-btn').style.display = 'none';
+        document.getElementById('clear-memory-btn').style.display = 'none';
+        document.getElementById('user-id-row').style.display = level === '6' ? 'flex' : 'none';
+        document.getElementById('sandbox-btn').style.display = level === '8' ? 'inline-block' : 'none';
+        document.getElementById('clear-sandbox-btn').style.display = level === '8' ? 'inline-block' : 'none';
 
         if (!level) return;
 
@@ -412,6 +557,20 @@
         // Показываем/скрываем выбор роли
         document.getElementById('role-selector').style.display =
             patternId === 'role-prompting' ? 'inline-block' : 'none';
+
+        // Уровень 6: userId + кнопки памяти
+        const isLevel6 = state.selectedLevel === '6';
+        document.getElementById('user-id-row').style.display = isLevel6 ? 'flex' : 'none';
+        document.getElementById('memory-btn').style.display = isLevel6 ? 'inline-block' : 'none';
+        document.getElementById('clear-memory-btn').style.display = isLevel6 ? 'inline-block' : 'none';
+
+        // Уровень 8: кнопки песочницы
+        const isLevel8 = state.selectedLevel === '8';
+        document.getElementById('sandbox-btn').style.display = isLevel8 ? 'inline-block' : 'none';
+        document.getElementById('clear-sandbox-btn').style.display = isLevel8 ? 'inline-block' : 'none';
+
+        // Скрыть info panel при смене паттерна
+        document.getElementById('info-panel-container').style.display = 'none';
     }
 
     function onRoleChange() {
@@ -445,6 +604,7 @@
             message: message,
             sessionId: state.sessionId,
             role: state.selectedRole,
+            userId: state.userId,
         };
 
         try {
@@ -479,6 +639,81 @@
         } finally {
             btn.disabled = false;
             btn.textContent = '📚 Загрузить документы';
+        }
+    }
+
+    async function showMemory() {
+        try {
+            const resp = await fetch('/api/level6/memory?userId=' + encodeURIComponent(state.userId));
+            const data = await resp.json();
+            const container = document.getElementById('info-panel-container');
+            const title = document.getElementById('info-panel-title');
+            const body = document.getElementById('info-panel-body');
+            title.textContent = '🧠 Память пользователя ' + data.userId + ' (' + data.count + ' записей)';
+            container.style.display = 'flex';
+            if (data.memories.length === 0) {
+                body.innerHTML = '<div style="color:#8b949e;padding:12px;font-size:13px;">Память пуста</div>';
+            } else {
+                body.innerHTML = data.memories.map(m => `
+                    <div class="memory-item">
+                        <span class="mem-type">${escapeHtml(m.type)}</span>
+                        <span class="mem-time">${escapeHtml(m.timestamp)}</span>
+                        <div class="mem-content">${escapeHtml(m.content)}</div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            addSystemMessage('Ошибка загрузки памяти: ' + e.message);
+        }
+    }
+
+    async function clearMemory() {
+        if (!confirm('Очистить всю память пользователя ' + state.userId + '?')) return;
+        try {
+            const resp = await fetch('/api/level6/memory?userId=' + encodeURIComponent(state.userId), { method: 'DELETE' });
+            const data = await resp.json();
+            addSystemMessage(data.message);
+            document.getElementById('info-panel-container').style.display = 'none';
+        } catch (e) {
+            addSystemMessage('Ошибка: ' + e.message);
+        }
+    }
+
+    async function showSandbox() {
+        try {
+            const resp = await fetch('/api/level8/sandbox');
+            const data = await resp.json();
+            const container = document.getElementById('info-panel-container');
+            const title = document.getElementById('info-panel-title');
+            const body = document.getElementById('info-panel-body');
+            title.textContent = '📁 Виртуальная файловая система (' + data.count + ' файлов)';
+            container.style.display = 'flex';
+            if (data.count === 0) {
+                body.innerHTML = '<div style="color:#8b949e;padding:12px;font-size:13px;">Файлов нет. Запустите агента сначала.</div>';
+            } else {
+                body.innerHTML = Object.entries(data.files).map(([name, content]) => `
+                    <div class="sandbox-file">
+                        <div class="sandbox-file-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display==='none'?'block':'none'">
+                            📄 ${escapeHtml(name)} <span style="color:#8b949e;font-weight:normal;font-size:11px;margin-left:auto">${content.length} симв. ▼</span>
+                        </div>
+                        <div class="sandbox-file-body">${escapeHtml(content)}</div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            addSystemMessage('Ошибка загрузки песочницы: ' + e.message);
+        }
+    }
+
+    async function clearSandbox() {
+        if (!confirm('Очистить виртуальную файловую систему?')) return;
+        try {
+            const resp = await fetch('/api/level8/sandbox', { method: 'DELETE' });
+            const data = await resp.json();
+            addSystemMessage(data.message);
+            document.getElementById('info-panel-container').style.display = 'none';
+        } catch (e) {
+            addSystemMessage('Ошибка: ' + e.message);
         }
     }
 

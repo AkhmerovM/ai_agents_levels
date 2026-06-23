@@ -47,6 +47,26 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.ailevels</groupId>
+            <artifactId>level4-agents</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ailevels</groupId>
+            <artifactId>level5-multiagent</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ailevels</groupId>
+            <artifactId>level6-longterm-memory</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ailevels</groupId>
+            <artifactId>level7-planning</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.ailevels</groupId>
+            <artifactId>level8-autonomous</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

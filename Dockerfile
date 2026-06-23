@@ -12,6 +12,11 @@ COPY common/pom.xml common/pom.xml
 COPY level1-pure-llm/pom.xml level1-pure-llm/pom.xml
 COPY level2-memory-rag/pom.xml level2-memory-rag/pom.xml
 COPY level3-tools/pom.xml level3-tools/pom.xml
+COPY level4-agents/pom.xml level4-agents/pom.xml
+COPY level5-multiagent/pom.xml level5-multiagent/pom.xml
+COPY level6-longterm-memory/pom.xml level6-longterm-memory/pom.xml
+COPY level7-planning/pom.xml level7-planning/pom.xml
+COPY level8-autonomous/pom.xml level8-autonomous/pom.xml
 COPY app/pom.xml app/pom.xml
 
 # Загружаем зависимости (этот слой кэшируется)
@@ -22,6 +27,11 @@ COPY common/src common/src
 COPY level1-pure-llm/src level1-pure-llm/src
 COPY level2-memory-rag/src level2-memory-rag/src
 COPY level3-tools/src level3-tools/src
+COPY level4-agents/src level4-agents/src
+COPY level5-multiagent/src level5-multiagent/src
+COPY level6-longterm-memory/src level6-longterm-memory/src
+COPY level7-planning/src level7-planning/src
+COPY level8-autonomous/src level8-autonomous/src
 COPY app/src app/src
 
 RUN mvn package -q -DskipTests
